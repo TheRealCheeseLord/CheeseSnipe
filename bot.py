@@ -20,6 +20,8 @@ TOKEN = os.getenv("TOKEN")
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix=';', help_command=None, intents=intents, debug_guilds=[870024105934614609])
 
+latest_message = None
+
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
@@ -32,6 +34,8 @@ async def on_message_delete(message: discord.Message):
 
     if message.author.bot == True:
         return
+
+    latest_message = message
 
     if not str(message.author.id) in db_json:
         if not message.attachments:
@@ -178,6 +182,22 @@ async def view(ctx: discord.ApplicationContext, user: discord.Option(discord.Mem
             await ctx.respond(embed = embed)
     else:
         embed = discord.Embed(title='User not found', color=0xebca26)
+        await ctx.respond(embed = embed)
+
+@bot.slash_command(name='snipe')
+async def snipe(ctx: discord.ApplicationContext):
+
+    created_at = latest_message.created_at
+
+    s = "**Created At:** " + created_at + " UTC" +"\n**Content:**\n\n"
+        
+    s += latest_message.content
+
+    if latest_message.attachements:
+        embed = discord.Embed(title='**' + str(latest_message.author) + '**:', description=s, color=0xebca26)
+        await ctx.respond(embed = embed, files = latest_message.attachements)
+    else:
+        embed = discord.Embed(title='**' + str(latest_message.author) + '**:', description=s, color=0xebca26)
         await ctx.respond(embed = embed)
 
 bot.run(TOKEN)
